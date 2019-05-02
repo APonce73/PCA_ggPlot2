@@ -1,86 +1,15 @@
-library(vegan)
-library(multcomp)
 library(ade4)
 library(ggplot2)
 library(ggrepel)
-library(ggord)
 library(tidyverse)
 
-
-getwd()
-#setwd("C:\\Users\\aponce\\Dropbox\\JANO\\2015\\Soledad_Vasquez\\")
-setwd("~/Dropbox/JANO/2017/Soledad/Stevia")
-getwd()
-dir()
-Tabla1 <- read.delim("FQ_Stevia.csv", sep = ",", header = T)
-Tabla1[is.na(Tabla1)] <- 0
-apply(Tabla1[,-c(1:2)],2,sum)
-
-Tabla2 <- read.table("Metales_SteviaICP.csv", sep = ",", header = T)
-head(Tabla2)
-Tabla2[is.na(Tabla2)] <- 0
-
-apply(Tabla2[,-c(1:2)],2,sum)
-apply(Tabla2[,-c(1:2)],2,sum) > 0
-Tabla2.11 <- Tabla2[,-c(1:2)]
-Tabla2.11 <- Tabla2.11[,apply(Tabla2.11,2,sum)>0]
-Tabla2.11 <- data.frame(Tabla2[,1:2], Tabla2.11)
-
-
-Tabla3 <- read.delim("FQ_Suelo.csv", sep = ",", header = T)
-Tabla3[is.na(Tabla3)] <- 0
-apply(Tabla3[,-c(1:2)],2,sum)
-
-
-Tabla4 <- read.delim("Metales_SueloICP.csv", sep = ",", header = T)
-dim(Tabla4)
-head(Tabla4)
-Tabla4[is.na(Tabla4)] <- 0
-apply(Tabla4[,-c(1:2)],2,sum)
-Tabla4.11 <- Tabla4[,-c(1:2)]
-Tabla4.11 <- Tabla4.11[,apply(Tabla4.11,2,sum)>0]
-Tabla4.11 <- data.frame(Tabla4[,1:2], Tabla4.11)
-
-dim(Tabla4.11)
-dim(Tabla4)
-
-
-head(Tabla1)
-head(Tabla2)
-dim(Tabla1)
-
-Tabla1.1 <- list(val = Tabla1[,1:2], var = Tabla1[,-c(1:2)])
-
-Tabla2.1 <- list(val = Tabla2.11[,1:2], var = Tabla2.11[,-c(1:2)])
-
-Tabla3.1 <- list(val = Tabla3[,1:2], var = Tabla3[,-c(1:2)])
-
-Tabla4.1 <- list(val = Tabla4.11[,1:2], var = Tabla4.11[,-c(1:2)])
-
-
-#Para FQ del Estivia
-head(Tabla1.1)
-names(Tabla1.1$val)
-datTranf <- decostand(Tabla1.1$var, "normalize", MARGIN = 2)
-datTranf
-apply(datTranf,2,sd)
-round(apply(datTranf,2,sd),0)
-Oba <- adonis(vegdist(datTranf, "euclidean")~Tabla1.1$val$Muestra, permutation=999)
-Oba
-par(mfrow=c(1,1))
-pca1 <- dudi.pca(datTranf[,], scannf = F, nf=3)
-scatter(pca1)
-s.arrow(pca1$c1*3, boxes=T, clabel=1, xlim=c(-3,3))
-pca1$eig
-round((pca1$eig/sum(pca1$eig))*100, 1)
-s.class(pca1$l1, Tabla1.1$val$Muestra, cellipse=1, cstar = 1, pch = 1,sub = "FQ del Stevia", csub=0.9, possub="topleft", add.p=T, clabel=1.4)
-
+######
 ###################
-#LL <- ggord(pca1, grp_in = Tabla1.1$val$Muestra, ellipse = FALSE, arrow = 0.2, txt = 3)
-#LL
-#LL + geom_text_repel(aes(x = pca1$co$Comp1 + 0.25, label = rownames(pca1$co)))
+#Small function for do PCA 
+# pca1 <- dudi.hillsmith(Tabla3$Value1, scannf = F, nf = 5)
+# summary(pca1)
 #
-#  theme_classic(base_size = 16)
+#  
 
 #Funcion con 5 componentes del PCA
 # renglon = a los valores por renglón
@@ -102,40 +31,22 @@ PCbiplot <- function(renglon, columnas, Variables, Eigen, Titulo, multiplicador)
     geom_hline(yintercept = 0, color = "gray70") +
     geom_vline(xintercept = 0, color = "gray70") +
     geom_point(aes(color = Variables), alpha = 0.7, size = 3) +
-    xlab(paste(PC1, "%", sep =" ")) +
+    xlab(paste(PC1, "%", sep = " ")) +
     ylab(paste(PC2, "%", sep = " ") ) + 
     #xlim(-5, 6) + 
     ggtitle(Titulo) 
   
-#  p1  
-  
-#  p2 <- ggplot(pca1b,aes(x = Comp1, y = Comp2)) +
-#    theme_classic() +
-#    geom_point() + geom_text_repel(aes(x = Comp1, label = rownames(pca1b)))
-#p2
-  
-# p2 <- p1 +
-#    geom_point(data = pca1b, aes(x = Comp1, y = Comp2)) + 
-#    geom_text_repel(data = pca1b, aes(x = Comp1, y = Comp2, label = rownames(pca1b)))
-#p2
-  
   p2 <- p1 +
     geom_point(data = pca1b, aes(x = multiplicador*Comp1, y = multiplicador*Comp2), alpha = 0) + 
-    geom_text_repel(data = pca1b, aes(x = multiplicador*Comp1, y = multiplicador*Comp2, label = rownames(pca1b)), alpha = 0.7, size = 3) +
+    geom_label_repel(data = pca1b, aes(x = multiplicador*Comp1, y = multiplicador*Comp2, label = rownames(pca1b)), 
+                     box.padding   = 0.7, point.padding = 0.5, size = 4, alpha = 0.7) +
     geom_segment(data =  pca1b, aes(x = 0, y = 0, xend = multiplicador*Comp1, yend = multiplicador*Comp2), arrow = arrow(length = unit(0.2,"cm")), alpha = 0.7, color = "black")
   
   p2
 }
 
-
-#pca1a <- data.frame(pca1$li)
-#pca1b <- data.frame(pca1$co)
-#Variables <- Tabla1.1$val$Muestra
-
-PCbiplot(pca1$li, pca1$co, Tabla1.1$val$Muestra, pca1$eig,"PCA FQ Stevia", 2)
-
-  #  p1 + geom_text_repel(aes(x = Axis1 + 0.25, label = Tabla1.1$val$Muestra)) 
-  
+#PCbiplot(pca1$li, pca1$co, Tabla3$Var1$Grupos, pca1$eig,"PCA Grupos de K-means", 4)
+#
 
   
   
